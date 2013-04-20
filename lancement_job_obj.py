@@ -10,8 +10,8 @@ import time
 import glob
 import os
 import shutil
-import loggingCQM
-import gestionConfigFiles
+from . import loggingCQM
+from . import gestionConfigFiles
 
 
 # Variables Globales ===========================================================
@@ -26,6 +26,7 @@ import gestionConfigFiles
 # _LOG_FILE = globalWorkFolder + r"\log_daemon.log"
 
 class Job:
+
     """Classe définissant un Job par:
     -jobType [abq,lmgc90,script]
     -cmd
@@ -48,10 +49,11 @@ class Job:
 
 
 class JobAbq(Job):
+
     """Classe JobAbq hérite de job
     instance d'un job Abaqus
     """
-    def __init__(self, inputFileName, pathToInputFile, optCmd="", cpus=1):
+    def __init__(self, inputFileName, pathToInputFile, optCmd="", cpus=1,gpus=0):
         Job.__init__(self, jobType="abq")
 
         self.inputFileName = inputFileName.split('.')[0]
@@ -64,6 +66,13 @@ class JobAbq(Job):
         else:
             self.cpus = cpus
 
+        if gpus > GLOBAL_GPUS_MAX:
+            self.gpus = GLOBAL_GPUS_MAX
+        elif gpus <= 0:
+            self.gpus = 1
+        else:
+            self.gpus = gpus
+
         self.optCmd = optCmd
 
     def __str__(self):
@@ -72,6 +81,8 @@ class JobAbq(Job):
             globalWorkFolder + self.pathToInputFile + \
             self.inputFileName + ".inp"
         strJob = strJob + ' cpus=' + str(self.cpus)
+        strJob = strJob + ' gpus=' + str(self.gpus)
+
         strJob = strJob + ' ask=off'
         if not globalTempFolder == "":
             strJob = strJob + ' scratch=' + globalTempFolder
@@ -81,8 +92,8 @@ class JobAbq(Job):
 
         return strJob
 
-    #def waitCompletion(nbConcurrentJobs=1):
-            
+    # def waitCompletion(nbConcurrentJobs=1):
+
     def execJob(self):
         """Méthode permettant d'exécuter un Job Abaqus dans un nouveau process
         """
@@ -132,6 +143,7 @@ class JobAbq(Job):
 
 
 class Queue:
+
     """Classe définissant une liste de job en attente
     """
 
@@ -166,18 +178,19 @@ class Queue:
                 # "path_to_inputFile":job, "nCPU":1})
                 loggingCQM.main_logger.info("%s added to the Queue", JobName)
 
-
     def remove(self, Qjob):
         self.queue.remove(Qjob)
 # Liste d'attente ===========================================================
+
 
 def nbConcurentJobsRunning():
     tblJob = []
     InputSubfolderList = listdirectory(globalInputFolder)
     for nomfich in InputSubfolderList:
         if nomfich[-4:] == ".023":
-            i=i+1
+            i = i + 1
     return i
+
 
 def listdirectory(path):
     fichier = []
@@ -186,6 +199,7 @@ def listdirectory(path):
             fichier.append(os.path.join(root, i))
     return fichier
 
+
 def alreadyRunning():
     if not os.path.isfile(globalWorkFolder + r"/daemon.023"):
         loggingCQM.main_logger.critical(
@@ -193,6 +207,7 @@ def alreadyRunning():
         return True
     else:
         return False
+
 
 def daemonQueue():
     strQuit = False
@@ -208,17 +223,17 @@ def daemonQueue():
 
         if not queue.queue == []:
             for Qjob in queue.queue:
-                if nbConcurentJobsRunning<1:
+                if nbConcurentJobsRunning < 1:
                     Qjob.execJob()
                     queue.remove(Qjob)
                     print(queue)
 
-                while suivant==False:
-                    if nbConcurentJobsRunning<1:
-                        suivant=True
+                while suivant == False:
+                    if nbConcurentJobsRunning < 1:
+                        suivant = True
                     else:
-                        suivant=False
-                        
+                        suivant = False
+
                 if alreadyRunning():
                     strQuit = True
                     return

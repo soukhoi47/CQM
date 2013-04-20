@@ -15,7 +15,7 @@ import __builtin__
 
 dConfigWindows = {"calcFolders":{"installFolder":r'C:\CQM', "workFolder":r'C:\Temp\work', "inputFolder":r'C:\Temp\input',
                   "outputFolder":r'C:\Temp\output', "logFileName":'log_CQM.log'},
-                  "calcParam": {"maxCPUS":1 , "abqCmd":'abaqus'},
+                  "calcParam": {"maxCPUS":1 ,"maxGPUS":1,"prlJobs":2, "abqCmd":'abaqus'},
                   "CQMParam":{"refreshTime":30}}
 
 
@@ -35,6 +35,8 @@ def writeConfigFile(configVar, configFile):
     temp = configVar["calcParam"]
     config.add_section('calcParam')
     config.set('calcParam', 'maxCPUS', temp["maxCPUS"])
+    config.set('calcParam', 'maxGPUS', temp["maxGPUS"])
+    config.set('calcParam', 'prlJobs', temp["prlJobs"])
     config.set('calcParam', 'abqCmd', temp["abqCmd"])
     
     temp = configVar["CQMParam"]
@@ -69,6 +71,8 @@ def readConfigFile(configFile):
     temp = {}
     #reading calcParam parameters
     temp["maxCPUS"] = config.get('calcParam', 'maxCPUS')
+    temp["maxGPUS"] = config.get('calcParam', 'maxGPUS')
+    temp["prlJobs"] = config.get('calcParam', 'prlJobs')
     temp["abqCmd"] = config.get('calcParam', 'abqCmd')
     configDict["calcParam"] = temp
     
@@ -103,6 +107,8 @@ def applConfig(configDict):
     tempConf = configDict["calcParam"]
 
     __builtin__.GLOBAL_CPUS_MAX = int(tempConf["maxCPUS"])
+    __builtin__.GLOBAL_GPUS_MAX = int(tempConf["maxGPUS"])
+    __builtin__.GLOBAL_PRL_JOBS = int(tempConf["prlJobs"])
     __builtin__.globalCmdAbaqus = tempConf["abqCmd"]
     
     tempConf = configDict["CQMParam"]
